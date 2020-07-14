@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="https://cdn.bootcss.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <title>Document</title>
+    <style>
+        body{
+            overflow-x: hidden;
+            margin: 0;
+        }
+        .contain{
+            width: 100vw;
+            height: 100vh;
+            background-color: rgb(5, 2, 38);
+            display: flex;
+            flex-direction: row;
+            overflow-x: hidden;
+            justify-content: center;
+            align-items: center;
+        }
+       
+        #btn-search{
+            height: 7vh;
+            width: 8vw;
+            background-color: #c93f3f;
+            font-size: 25px;
+            font-weight: 600;
+            border-radius: 20px;
+            color: white;
+            outline: none;
+        }
+        #id-input{
+            display: inline-block;
+          border-radius: 50px;
+          width: 47vw;
+          height: 7vh;
+          background-color: rgba(209, 209, 209, 0.2);
+          outline: none;
+          color: white;
+          font-size: 22px;
+          text-align: center;
+          margin-right: 20px;
+        }
+        #tabletest{
+            display: none;
+        }
+        .contain2{
+            background-color: rgb(5, 2, 38);
+            color: white;
+        }
+        .table th {
+            padding: 0.4rem;
+        }
+    </style>
+</head>
+<body>
+   <div class="contain" id="contain">
+       <input type="text" name="" id="id-input">
+       <button id="btn-search">Go</button>
+       
+       
+   </div>
+   <div class="contain2">
+    <table class="table table-bordered" id='tabletest'>
+        <tr>
+            <th>正文</th>
+            <th>发布位置</th>
+            <th>发布工具</th>
+            <th>点赞数</th>
+            <th>评论数</th>
+            <th>转发数</th>
+        </tr>
+     </table>
+   </div>
+   <script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
+   
+   <script type="text/javascript" src="https://cdn.bootcss.com/jquery/1.4.0/jquery.js"></script>
+   <script>
+    $("#btn-search").click(function () {
+        var userid = $("#id-input").val()
+        if(userid!=" "){
+        console.log(userid)
+        $.ajax({
+            url:"http://127.0.0.1:8000/spider",
+            type:"GET",
+            data: {
+                user_id : userid,
+            },
+            dataType: 'json',
+            success:(res) =>{
+                console.log(res);
+                $("#tabletest").css({
+                    'display':'block',
+                    "width":"90vw",
+                    "margin": "auto",})
+                $("#contain").css({
+                    "height":"10vh",
+                    "justify-content": "left",
+                    "padding-left":"4vw", })
+                for(i in res) {
+                  var tr;
+                  tr='<td>'+res[i].content.substring(0,30)+"..."+'</td>'+'<td>'+res[i].publish_place+'</td>'+'<td>'+res[i].publish_tool+'</td>'+'<td>'+res[i].approved_num+'</td>'+'<td>'+res[i].comment_num+'</td>'+'<td>'+res[i].transmit_num+'</td>'
+                  $("#tabletest").append('<tr>'+tr+'</tr>')
+                  if(i>10){
+                    tr='<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'
+                    $("#tabletest").append('<tr>'+tr+'</tr>')
+                    break
+                  }
+                }
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+        });
+        }
+        else{
+            alert("输入不能为空")
+        }
+     });
+     
+    </script>
+</body>
+
+</html>
