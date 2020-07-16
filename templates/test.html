@@ -59,7 +59,7 @@
    <div class="contain" id="contain">
        <input type="text" name="" id="id-input">
        <button id="btn-search">Go</button>
-       
+       <button id="userinfo">test</button>
        
    </div>
    <div class="contain2">
@@ -91,6 +91,11 @@
             dataType: 'json',
             success:(res) =>{
                 console.log(res);
+                var table = document.getElementById("tabletest"),
+                trs = table.getElementsByTagName("tr");
+                for(var i = trs.length - 1; i > 0; i--) {
+                     table.deleteRow(i);
+                }
                 $("#tabletest").css({
                     'display':'block',
                     "width":"90vw",
@@ -99,6 +104,7 @@
                     "height":"10vh",
                     "justify-content": "left",
                     "padding-left":"4vw", })
+
                 for(i in res) {
                   var tr;
                   tr='<td>'+res[i].content.substring(0,30)+"..."+'</td>'+'<td>'+res[i].publish_place+'</td>'+'<td>'+res[i].publish_tool+'</td>'+'<td>'+res[i].approved_num+'</td>'+'<td>'+res[i].comment_num+'</td>'+'<td>'+res[i].transmit_num+'</td>'
@@ -109,6 +115,30 @@
                     break
                   }
                 }
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+        });
+        }
+        else{
+            alert("输入不能为空")
+        }
+     });
+     $("#userinfo").click(function () {
+        var userid = $("#id-input").val()
+        if(userid!=" "){
+        console.log(userid)
+        $.ajax({
+            url:"http://127.0.0.1:8000/userinfo",
+            type:"GET",
+            data: {
+                user_id : userid,
+            },
+            dataType: 'json',
+            success:(res) =>{
+                console.log(res);
+                
             },
             error:(err) =>{
                 console.log(err);

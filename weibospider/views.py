@@ -5,12 +5,9 @@ from django.http import JsonResponse
 from django.core import serializers
 from .models import UserInfo,Information
 import json 
+from . import userinfospider
 
 # Create your views here.
-def hello(request):
-#     spider.startspider()
-    return render(request, "test.html")
-
 def getid(request):
     return render(request, "test.html")
 
@@ -44,3 +41,7 @@ def showlist(request):
 def test(requset):
     print('yes')
     return 
+
+
+def userinfo(requset):
+    userinfospider.getfansinfo("6153069294")
