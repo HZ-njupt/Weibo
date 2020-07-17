@@ -14,8 +14,12 @@ from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 from time import sleep
 from .models import UserInfo,Information
+from django.conf import settings
 
 
+user_id_list = []
+stable_user_id = []
+danger_user_id = []
 class Parser:
     def __init__(self, config):
         self.config = config
@@ -366,68 +370,6 @@ class Printer:
 
 
 
-
-
-
-# class Downloader:
-#     def __init__(self, config):
-#         self.config = config
-
-#     def download_files(self, file_path, type, weibo):
-#         """下载文件(图片/视频)"""
-#         try:
-#             if type == 'img':
-#                 describe = u'图片'
-#                 key = 'original_pictures'
-#             else:
-#                 describe = u'视频'
-#                 key = 'video_url'
-#             print(u'即将进行%s下载' % describe)
-#             for w in tqdm(weibo, desc='Download progress'):
-#                 if w[key] != u'无':
-#                     file_prefix = w['publish_time'][:11].replace(
-#                         '-', '') + '_' + w['id']
-#                     if type == 'img' and ',' in w[key]:
-#                         w[key] = w[key].split(',')
-#                         for j, url in enumerate(w[key]):
-#                             file_suffix = url[url.rfind('.'):]
-#                             file_name = file_prefix + '_' + str(
-#                                 j + 1) + file_suffix
-#                             self.download_one_file(
-#                                 url, file_path + os.sep + file_name, type,
-#                                 w['id'])
-#                     else:
-#                         if type == 'video':
-#                             file_suffix = '.mp4'
-#                         else:
-#                             file_suffix = w[key][w[key].rfind('.'):]
-#                         file_name = file_prefix + file_suffix
-#                         self.download_one_file(w[key],
-#                                                file_path + os.sep + file_name,
-#                                                type, w['id'])
-#             print(u'%s下载完毕,保存路径:' % describe)
-#             print(file_path)
-#         except Exception as e:
-#             print('Error: ', e)
-#             traceback.print_exc()
-
-#     def download_one_file(self, url, file_path, type, weibo_id):
-#         """下载单个文件(图片/视频)"""
-#         try:
-#             if not os.path.isfile(file_path):
-#                 s = requests.Session()
-#                 s.mount(url, HTTPAdapter(max_retries=5))
-#                 downloaded = s.get(url, timeout=(5, 10))
-#                 with open(file_path, 'wb') as f:
-#                     f.write(downloaded.content)
-#         except Exception as e:
-#             error_file = './not_downloaded.txt'
-#             with open(error_file, 'ab') as f:
-#                 url = weibo_id + ':' + url + '\n'
-#                 f.write(url.encode(sys.stdout.encoding))
-#             print('Error: ', e)
-#             traceback.print_exc()
-
 def is_date(since_date):
     """判断日期格式是否正确"""
     try:
@@ -493,119 +435,6 @@ def write_log(since_date):
     with open(file_path, 'ab') as f:
         f.write(content.encode(sys.stdout.encoding))
 
-# class MysqlWriter:
-#     def __init__(self, config):
-#         self.config = config
-
-#     def write_user(self, user):
-#         """将爬取的用户信息写入MySQL数据库"""
-#         self.user = user
-#         # # 创建'weibo'数据库
-#         # create_database = """CREATE DATABASE IF NOT EXISTS weibo DEFAULT
-#         #                  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"""
-#         # self.mysql_create_database(create_database)
-#         #创建'user'表
-#         # create_table = """
-#         #         CREATE TABLE IF NOT EXISTS user (
-#         #         id varchar(12) NOT NULL,
-#         #         nickname varchar(30),
-#         #         weibo_num INT,
-#         #         following INT,
-#         #         followers INT,
-#         #         PRIMARY KEY (id)
-#         #         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
-#         # self.mysql_create_table(create_table)
-#         self.mysql_insert('user', [user])
-#         print(u'%s信息写入MySQL数据库完毕' % user['nickname'])
-
-#     def write_weibo(self, weibo):
-#         """将爬取的微博信息写入MySQL数据库"""
-#         # 创建'weibo'表
-#         # create_table = """
-#         #         CREATE TABLE IF NOT EXISTS weibo (
-#         #         id varchar(10) NOT NULL,
-#         #         user_id varchar(12),
-#         #         content varchar(2000),
-#         #         original_pictures varchar(1000),
-#         #         retweet_pictures varchar(1000),
-#         #         original BOOLEAN NOT NULL DEFAULT 1,
-#         #         video_url varchar(300),
-#         #         publish_place varchar(100),
-#         #         publish_time DATETIME NOT NULL,
-#         #         publish_tool varchar(30),
-#         #         up_num INT NOT NULL,
-#         #         retweet_num INT NOT NULL,
-#         #         comment_num INT NOT NULL,
-#         #         PRIMARY KEY (id)
-#         #         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
-#         # self.mysql_create_table(create_table)
-#         # 在'weibo'表中插入或更新微博数据
-#         weibo_list = []
-#         for w in weibo:
-#             w['user_id'] = self.user['id']
-#             weibo_list.append(w)
-#         self.mysql_insert('weibo', weibo_list)
-#         print(u'%d条微博写入MySQL数据库完毕' % len(weibo))
-
-#     # def mysql_create(self, connection, sql):
-#     #     """创建MySQL数据库或表"""
-#     #     try:
-#     #         with connection.cursor() as cursor:
-#     #             cursor.execute(sql)
-#     #     finally:
-#     #         connection.close()
-
-#     # def mysql_create_database(self, sql):
-#     #     """创建MySQL数据库"""
-#     #     try:
-#     #         import pymysql
-#     #     except ImportError:
-#     #         sys.exit(u'系统中可能没有安装pymysql库，请先运行 pip install pymysql ，再运行程序')
-#     #     mysql_config = self.config['mysql_config']
-#     #     try:
-#     #         connection = pymysql.connect(**mysql_config)
-#     #     except pymysql.err.OperationalError:
-#     #         sys.exit(u'系统中可能没有安装或启动MySQL数据库或配置错误，请先根据系统环境安装或启动MySQL，再运行程序')
-#     #     self.mysql_create(connection, sql)
-
-#     # def mysql_create_table(self, sql):
-#     #     """创建MySQL表"""
-#     #     import pymysql
-#     #     mysql_config = self.config['mysql_config']
-#     #     mysql_config['db'] = 'weibo'
-#     #     connection = pymysql.connect(**mysql_config)
-#     #     self.mysql_create(connection, sql)
-
-#     def mysql_insert(self, table, data_list):
-#         """向MySQL表插入或更新数据"""
-#         import pymysql
-#         mysql_config = self.config['mysql_config']
-
-#         if len(data_list) > 0:
-#             keys = ', '.join(data_list[0].keys())
-#             values = ', '.join(['%s'] * len(data_list[0]))
-#             mysql_config['db'] = 'weibo'
-#             connection = pymysql.connect(**mysql_config)
-#             cursor = connection.cursor()
-#             sql = """INSERT INTO {table}({keys}) VALUES ({values}) ON
-#                      DUPLICATE KEY UPDATE""".format(table=table,
-#                                                     keys=keys,
-#                                                     values=values)
-#             update = ','.join([
-#                 " {key} = values({key})".format(key=key)
-#                 for key in data_list[0]
-#             ])
-#             sql += update
-#             try:
-#                 cursor.executemany(
-#                     sql, [tuple(data.values()) for data in data_list])
-#                 connection.commit()
-#             except Exception as e:
-#                 connection.rollback()
-#                 print('Error: ', e)
-#                 traceback.print_exc()
-#             finally:
-#                 connection.close()
 
 
 class Spider(object):
@@ -619,19 +448,6 @@ class Spider(object):
                 for t in self.config['cookie'].split(";")
             }
         self.config['user_id_list'].append(userid)
-        # if type(self.config['user_id_list']) == type(u""):
-        #     user_id_list = self.config['user_id_list']
-        #     if not os.path.isabs(user_id_list):
-        #         user_id_list = os.path.split(
-        #             os.path.realpath(__file__))[0] + os.sep + user_id_list
-        #     self.config['user_id_list'] = user_id_list
-        #     with open(self.config['user_id_list'], 'rb') as f:
-        #         lines = f.read().splitlines()
-        #         lines = [line.decode('utf-8') for line in lines]
-        #         self.config['user_id_list'] = [
-        #             line.split(' ')[0] for line in lines if
-        #             len(line.split(' ')) > 0 and line.split(' ')[0].isdigit()
-        #         ]
         if type(self.config['since_date']) == type(0):
             self.config['since_date'] = str(
                 date.today() - timedelta(self.config['since_date']))
@@ -651,7 +467,7 @@ class Spider(object):
         nickname = nickname[:-3]
         if nickname == u'登录 - 新' or nickname == u'新浪':
             write_log(self.config['since_date'])
-            sys.exit(u'cookie错误或已过期,请按照README中方法重新获取')
+            sys.exit(u'cookie错误或已过期,请重新获取')
         
         self.user['nickname'] = nickname
         #UserInfo.nickname = nickname
@@ -680,6 +496,8 @@ class Spider(object):
         is_exist = info[0].xpath("div/span[@class='ctt']")
         if is_exist:
             for i in range(0, len(info) - 2):
+                if i==0:
+                    continue
                 weibo = self.parser.get_one_weibo(info[i],self.user['id'])
                 if weibo:
                     if weibo['id'] in self.weibo_id_list:
@@ -744,22 +562,27 @@ class Spider(object):
             self.get_weibo_info()
             print(u'信息抓取完毕')
             print('*' * 100)
-            # if self.config['pic_download'] == 1:
-            #     file_path = get_filepath('img', self.user['nickname'])
-            #     self.downloader.download_files(file_path, 'img', self.weibo)
-            # if self.config['video_download'] == 1:
-            #     file_path = get_filepath('video', self.user['nickname'])
-            #     self.downloader.download_files(file_path, 'video', self.weibo)
+            
+
+
 
 
 def startspider(userid):
-    import json
-    config_path = os.path.split(
-        os.path.realpath(__file__))[0] + os.sep + 'config.json'
-    if not os.path.isfile(config_path):
-        sys.exit(u'当前路径：%s 不存在配置文件config.json' %
-                 (os.path.split(os.path.realpath(__file__))[0] + os.sep))
-    with open(config_path) as f:
-        config = json.loads(f.read())
-    spider = Spider(config,userid)
-    spider.start()  # 爬取微博信息
+    if UserInfo.objects.filter(userid=userid).exists():
+        return 0
+    else:
+        settings.USERID_LIST.append(userid)
+        print(settings.USERID_LIST)
+        import json
+        config_path = os.path.split(
+            os.path.realpath(__file__))[0] + os.sep + 'config.json'
+        if not os.path.isfile(config_path):
+            sys.exit(u'当前路径：%s 不存在配置文件config.json' %
+                     (os.path.split(os.path.realpath(__file__))[0] + os.sep))
+        with open(config_path) as f:
+            config = json.loads(f.read())
+        spider = Spider(config,userid)
+        spider.start()  # 爬取微博信息
+        return 1
+
+

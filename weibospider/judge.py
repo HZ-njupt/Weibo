@@ -1,3 +1,4 @@
+
 from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
 import jieba
@@ -103,7 +104,7 @@ def jieba_feature(number):
                                                                        neg_word_count),total_word_count)
         word_scores[word]=pos_score+neg_score
         best_vals=sorted(word_scores.items(),key=lambda item: item[1],
-                         reverse=True)[:number]
+                         reverse=True)[:number]     
         best_words=set([w for w,s in best_vals])
     return dict([(word,True) for word in best_words])
 
@@ -147,27 +148,7 @@ def build_page(page):
     # feature 3=  bigram_words(text(),score_fn=BigramAssocMeasures.chi_sq,n=1000)
     feature4 = jieba_feature(500)  # 结巴分词，选取1000为特征维度，可调整
     temp={}
-    '''
-     #单个字为特征
-     for word in page:
-         if word in feature1:
-             temp[word]='True'
-     #双字为特征
-     bigrams= BigramCollocationFinder.from_words(words)
-     text=[u + v for (u, v) in bigrams.ngram_fd]
-     for words in text:
-         if words in feature2:
-             temp[words]='True' 
     
-     #单字和双字为特征
-    bigrams= BigramCollocationFinder.from_words(words)
-     text=[u + v for (u, v) in bigrams.ngram_fd]
-        for word in page:
-            text.append(word)
-        for words in text:
-            if words in feature3:
-                temp[words]='True'
-     '''
     #现采用结巴分词形式处理待测文本
     fenci0=jieba.cut(page,cut_all=False)
     stop=[line.strip() for line in open('stopwords1.txt','r',encoding='utf-8').readlines()]

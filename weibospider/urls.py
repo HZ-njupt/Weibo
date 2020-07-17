@@ -9,5 +9,6 @@ urlpatterns = [
     url(r'^index/', views.getid),
     url(r'^showlist/', views.showlist),
     url(r'^spider/', views.Inspider),
-    url(r'^test/', views.test),
+    url(r'^index/', views.test),
+    url(r'^userinfo',views.userinfo)
 ] 
