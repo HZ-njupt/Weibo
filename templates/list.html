@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin:0;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <ul>
+            {%for item in information%}
+            <li>{{item.content}}</li>
+            {%endfor%}
+        </ul>
+    </div>
+    <button id="btn-test">test</button>
+
+    <script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
+    <script>
+        $("#btn-test").click(function () {
+        var userid = $("#id-input").val()
+        console.log(userid)
+        $.ajax({
+            url:"http://127.0.0.1:8000/test",
+            type:"GET",
+            data: {
+                user_id : userid,
+            },
+            dataType: 'json',
+            success:(res) =>{
+                console.log(res)
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+        });
+     });
+    </script>
+</body>
+</html>
