@@ -83,6 +83,9 @@ class useriofospider(object):
         print(idlist)
   
 def getfansinfo(userid):
+    # 记得来改
+    if UserInfo.objects.filter(userid = userid)[0].following == 0:
+        return 0
     import json
     config_path = os.path.split(
         os.path.realpath(__file__))[0] + os.sep + 'config.json'

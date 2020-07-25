@@ -4,6 +4,7 @@ import sys
 import traceback
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
+
 import random
 import copy
 import csv
@@ -326,14 +327,6 @@ class Parser:
             #qs = UserInfo.objects.filter(userid=id)[2]
             #print(qs)
             qs = UserInfo.objects.filter(userid=id)[0]
-            print(weibo['content'])
-            print(weibo['publish_place'])
-            print(weibo['publish_time'])
-            print(weibo['publish_tool'])
-            print(weibo['up_num'])
-            print(weibo['retweet_num'])
-            print(weibo['comment_num'])
-            print(qs.nickname)
             Information.objects.create(content=weibo['content'],publish_place=weibo['publish_place'],publish_time=weibo['publish_time'],publish_tool=weibo['publish_tool'],approved_num=weibo['up_num'],comment_num=weibo['comment_num'],transmit_num=weibo['retweet_num'],tuser=qs)
             return weibo
         except Exception as e:
@@ -438,7 +431,7 @@ def write_log(since_date):
 
 
 class Spider(object):
-    def __init__(self, config,userid):
+    def __init__(self, config,userid,sincedate):
         """Weibo类初始化"""
         self.config = config
         # change cookie from string to dict
@@ -448,6 +441,7 @@ class Spider(object):
                 for t in self.config['cookie'].split(";")
             }
         self.config['user_id_list'].append(userid)
+        self.config["since_date"] = sincedate-1
         if type(self.config['since_date']) == type(0):
             self.config['since_date'] = str(
                 date.today() - timedelta(self.config['since_date']))
@@ -524,7 +518,10 @@ class Spider(object):
         """获取微博信息"""
         url = 'https://weibo.cn/u/%s' % (self.user['id'])
         selector = self.parser.deal_html(url, self.config['cookie'])
-        self.get_user_info(selector)  # 获取用户昵称、微博数、关注数、粉丝数
+        if UserInfo.objects.filter(userid = self.user['id']).exists():
+            print("用户存在")
+        else:
+            self.get_user_info(selector)  # 获取用户昵称、微博数、关注数、粉丝数
 
         page_num = self.parser.get_page_num(selector)  # 获取微博总页数
         page1 = 0
@@ -568,21 +565,22 @@ class Spider(object):
 
 
 def startspider(userid):
+    sinceday = 1
     if UserInfo.objects.filter(userid=userid).exists():
-        return 0
-    else:
-        settings.USERID_LIST.append(userid)
-        print(settings.USERID_LIST)
-        import json
-        config_path = os.path.split(
-            os.path.realpath(__file__))[0] + os.sep + 'config.json'
-        if not os.path.isfile(config_path):
-            sys.exit(u'当前路径：%s 不存在配置文件config.json' %
-                     (os.path.split(os.path.realpath(__file__))[0] + os.sep))
-        with open(config_path) as f:
-            config = json.loads(f.read())
-        spider = Spider(config,userid)
-        spider.start()  # 爬取微博信息
-        return 1
+        tdata = Information.objects.filter(tuser_id = UserInfo.objects.filter(userid=userid)[0].id)
+        Idate = date.today() - tdata[0].publish_time
+        if Idate.days == 0:
+            return 0
+        sinceday = Idate.days
+    import json
+    config_path = os.path.split(
+        os.path.realpath(__file__))[0] + os.sep + 'config.json'
+    if not os.path.isfile(config_path):
+        sys.exit(u'当前路径：%s 不存在配置文件config.json' %
+            (os.path.split(os.path.realpath(__file__))[0] + os.sep))
+    with open(config_path) as f:
+        config = json.loads(f.read())
+    spider = Spider(config,userid,sinceday)
+    spider.start()  # 爬取微博信息
 
 

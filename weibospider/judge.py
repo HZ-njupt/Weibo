@@ -1,4 +1,3 @@
-
 from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
 import jieba
@@ -63,6 +62,7 @@ i=0
 l=Normal.objects.all().count()
 str1=[]
 while i<l:
+
     s1=Normal.objects.all().values('ncontent')[i]['ncontent'].split('\t')
     fenci1=jieba.cut(s1[0],cut_all=False)
     str1.append(list(set(fenci1)-set(stop)-set(['\ufeff','\n'])))
@@ -97,6 +97,7 @@ def jieba_feature(number):
     # 一个词的信息量等于积极卡方统计量加上消极卡方统计量
     total_word_count=pos_word_count+neg_word_count
     word_scores={}
+    best_words = []
     for word,freq in word_fd.items():
         pos_score=BigramAssocMeasures.chi_sq(con_word_fd['pos'][word],(freq,
                                                                        pos_word_count),total_word_count)
@@ -169,5 +170,24 @@ def predict_page(page):
     pred = classifier.classify_many(page)
     return pred
 
-
+def judgeuser(tuserid):
+    if Information.objects.filter(tuser_id=tuserid).count()<=10:
+        ifdelete=0
+        print("正常用户")
+    else:
+        i=1
+        d1 = Information.objects.filter(tuser_id=tuserid).values('publish_time')[i]['publish_time']
+        i=i+10
+        d2 = Information.objects.filter(tuser_id=tuserid).values('publish_time')[i]['publish_time']
+        d = d1 - d2 
+        contentjudge=judge.predict_page(judge.build_page(Information.objects.filter(tuser_id=tuserid).values('content')[1]['content']))
+        if d.days==0 and contentjudge[0]=="neg" :   
+            ifdelete=1
+            print("广告用户")
+        else:
+            ifdelete=0
+            print("正常用户")
+    if ifdelete==1:
+        UserInfo.objects.filter(id=tuserid).delete()
+        Information.objects.filter(tuser_id=tuserid).delete()
 

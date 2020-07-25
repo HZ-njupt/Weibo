@@ -9,6 +9,10 @@ class UserInfo(models.Model):
     weibo_num = models.PositiveIntegerField('微博数',default=0)
     following = models.PositiveIntegerField('关注数',default=0)
     followers = models.PositiveIntegerField('粉丝数',default=0)
+    isgetinfo = models.BooleanField('今日信息',default=False)
+    days = models.PositiveIntegerField('检测天数',default=0)
+    get_fans = models.BooleanField('获取粉丝',default=False)
+    status = models.IntegerField('状态',default=1)
 
     def __str__(self):
         return self.userid
@@ -23,18 +27,17 @@ class Information(models.Model):
     comment_num = models.PositiveIntegerField('评论数',default=0)
     transmit_num = models.PositiveIntegerField('转发数',default=0)
     tuser = models.ForeignKey("UserInfo",related_name = 'user_content')
-
-    def __str__(self):
-        return self.content
-        
+    class Meta: 
+      ordering = ('-publish_time',) 
 
 
-class Normal(models.Model):
-    ncontent = models.TextField()
-    def __str__(self):
-        return self.ncontent
 
 class Abnormal(models.Model):
     acontent = models.TextField()
     def __str__(self):
         return self.acontent
+
+class Normal(models.Model):
+    ncontent = models.TextField()
+    def __str__(self):
+        return self.ncontent
