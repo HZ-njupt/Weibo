@@ -9,7 +9,7 @@ class UserInfo(models.Model):
     weibo_num = models.PositiveIntegerField('微博数',default=0)
     following = models.PositiveIntegerField('关注数',default=0)
     followers = models.PositiveIntegerField('粉丝数',default=0)
-    isgetinfo = models.BooleanField('今日信息',default=False)
+    # isgetinfo = models.BooleanField('今日信息',default=False)
     days = models.PositiveIntegerField('检测天数',default=0)
     get_fans = models.BooleanField('获取粉丝',default=False)
     status = models.IntegerField('状态',default=1)
@@ -41,3 +41,13 @@ class Normal(models.Model):
     ncontent = models.TextField()
     def __str__(self):
         return self.ncontent
+
+class UserInfoDays(models.Model):
+    userid = models.CharField('用户ID',default="无",max_length=80)
+    nickname = models.CharField('用户昵称',default="无",max_length=80)
+    following = models.PositiveIntegerField('关注数',default=0)
+    time = models.DateField('日期')
+    iuser = models.ForeignKey("UserInfo",related_name = 'dayuser_content')
+
+    def __str__(self):
+        return self.time

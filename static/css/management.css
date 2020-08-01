@@ -1,0 +1,15 @@
+.m_contain{
+    width: 90vw;
+    margin: 12vh auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.m_block{
+    text-align: center;
+    overflow-y: scroll;
+    width: 28vw;
+    background-color: cadetblue;
+    height: 90vh;
+}

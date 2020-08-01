@@ -21,4 +21,5 @@ from django.conf import settings
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include("weibospider.urls")),
+    url(r'^manage/', include("management.urls")),
 ]

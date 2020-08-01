@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block contain %}
+  <div class="m_contain">
+    <div class="m_block">
+      <h4>正常用户（检测中）</h4>
+      <table class="table table-bordered" id='m_tabletest1'>
+        <tr>
+            <th>用户昵称</th>
+            <th>用户ID</th>
+            <th>用户性质</th>
+            <th>已检测天数</th>
+            <th>删除</th>
+        </tr>
+       </table>
+    </div>
+    <div class="m_block">
+      <h4>异常用户</h4>
+      <table class="table table-bordered" id='m_tabletest2'>
+        <tr>
+            <th>用户昵称</th>
+            <th>用户ID</th>
+            <th>用户性质</th>
+            <th>已检测天数</th>
+            <th>已处理</th>
+        </tr>
+       </table>
+    </div>
+    <div class="m_block">
+      <h4>疑似用户（检测中）</h4>
+      <table class="table table-bordered" id='m_tabletest3'>
+        <tr>
+            <th>用户昵称</th>
+            <th>用户ID</th>
+            <th>用户性质</th>
+            <th>已检测天数</th>
+            <th>删除</th>
+        </tr>
+       </table>
+    </div>
+  </div>
+{% endblock %}
+{% block ajax %}
+   <script>
+     $(function(){
+      $.ajax({
+            url:"http://127.0.0.1:8000/manage/show",
+            type:"GET",
+            dataType: 'json',
+            success:(res) =>{
+                console.log(res)
+                for(i in res) {
+                  var tr;
+                  tr='<td>'+res[i].nickname+'</td>'+'<td>'+res[i].userid+'</td>'+'<td>'+"普通用户"+'</td>'+'<td>'+res[i].days+'</td>'+'<td>'+"delete"+'</td>'
+                  if(res[i].status == 1){
+                    $("#m_tabletest1").append('<tr>'+tr+'</tr>')
+                  }
+                  else if(res[i].status == 0){
+                    $("#m_tabletest2").append('<tr>'+tr+'</tr>')
+                  }
+                  else{
+                    $("#m_tabletest3").append('<tr>'+tr+'</tr>')
+                  }
+                }
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+      })
+     })
+   </script>
+{% endblock %}

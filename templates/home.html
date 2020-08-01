@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block contain %}
+   <div class="contain" id="contain">
+       <input type="text" name="" id="id-input" placeholder="userid">
+       <button id="btn-search">Go</button>
+       <button id="userinfo">test</button>
+   </div>
+   <div class="contain2" id="contain2">
+    <div class="column">
+        <div class="usercard">
+          <img src="{% static "/imgs/userimage.png" %}" alt="用户">
+          <div style="height: 12vh;">
+            <h4 id="nickname">HZhuozhuooo</h4>
+           
+          </div>
+          <div class="rowsty">
+              <div>
+                <h6>微博数</h6>
+                <p id="weibonum">0</p>
+              </div>
+              <div>
+                <h6>粉丝数</h6>
+                <p id="following">0</p>
+              </div>
+              <div>
+                <h6>关注数</h6>
+                <p id="follower">0</p>
+              </div>
+          </div>
+          <div class="result">
+            <div>
+               <span>共获取用户微博：</span> 
+               <span id="getnum">0条</span>
+            </div>
+            <div>
+              <span>状态：</span>
+              <span id="status">正常</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <table class="table table-bordered" id='tabletest'>
+          <tr>
+              <th>正文</th>
+              <th>发布位置</th>
+              <th>发布工具</th>
+              <th>点赞数</th>
+              <th>评论数</th>
+              <th>转发数</th>
+          </tr>
+         </table>
+      </div>
+   </div>
+{% endblock %}
+
+   <!-- <div class="modal fade" id="loadingModal" backdrop="static" keyboard="false">
+    <div style="width: 200px;height:100px; z-index: 20000; position: absolute; text-align: center; left: 50%; top: 50%;margin-left:-100px;margin-top:-10px">　　
+        <div class="progress progress-striped active"
+             style="margin-bottom: 0;height:50px; text-align:center;line-height: 50px;font-size:large;">
+              数据加载中....　　　　
+        </div>
+    </div> -->
+   
+{% block ajax %}
+   <script>
+    //    showLoading = function ()
+    // {
+    //      $('#loadingModal').modal({backdrop: 'static', keyboard: false});
+    // }
+    // //隐藏掉loading框
+    // hideLoading = function ()
+    // {
+    //      $('#loadingModal').modal('hide');
+    //      print("hide")
+    // }
+    $("#btn-search").click(function () {
+        var userid = $("#id-input").val()
+        if(userid!=" "){
+        console.log(userid)
+        $.ajax({
+            url:"http://127.0.0.1:8000/spider",
+            type:"GET",
+            data: {
+                user_id : userid,
+            },
+            dataType: 'json',
+            // beforeSend:function(){
+            //       showLoading()
+            // },
+            // complete: function(){
+            //       hideLoading()
+            // },
+            success:(res) =>{
+                console.log(res);
+                var table = document.getElementById("tabletest"),
+                trs = table.getElementsByTagName("tr");
+                for(var i = trs.length - 1; i > 0; i--) {
+                     table.deleteRow(i)
+                }
+                $("#top").css({"padding-left":"4vw","width": "auto","border":"none",})
+                $("#id-input").css({ "width":"34vw", "height":"6vh","margin-left":"30vw",})
+                $("#btn-search").css({ "width":"7vw", "height":"6vh",})
+                $("#contain").css({ "height":"10vh","justify-content": "left","padding-left":"4vw",})
+                $("#contain2").css({"display":"block",})
+                $("#nickname").html(res[0].nickname)
+                $("#status").html(res[0].status)
+                $("#weibonum").html(res[0].weibonum)
+                $("#following").html(res[0].following)
+                $("#follower").html(res[0].follower)
+                $("#getnum").html((res.length-1)+"条")
+                for(i in res) {
+                  if(i==0) continue
+                  var tr;
+                  tr='<td>'+res[i].content.substring(0,50)+"..."+'</td>'+'<td>'+res[i].publish_place+'</td>'+'<td>'+res[i].publish_tool+'</td>'+'<td>'+res[i].approved_num+'</td>'+'<td>'+res[i].comment_num+'</td>'+'<td>'+res[i].transmit_num+'</td>'
+                  $("#tabletest").append('<tr>'+tr+'</tr>')
+                  if(i>20){
+                    tr='<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'+'<td>'+"..."+'</td>'
+                    $("#tabletest").append('<tr>'+tr+'</tr>')
+                    break
+                  }
+                }
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+        });
+        }
+        else{
+            alert("输入不能为空")
+        }
+     });
+
+
+     $("#userinfo").click(function () {
+        var userid = $("#id-input").val()
+        if(userid!=" "){
+        console.log(userid)
+        $.ajax({
+            url:"http://127.0.0.1:8000/userinfo",
+            type:"GET",
+            data: {
+                user_id : userid,
+            },
+            dataType: 'json',
+            success:(res) =>{
+                console.log(res);   
+            },
+            error:(err) =>{
+                console.log(err);
+            }
+        });
+        }
+        else{
+            alert("输入不能为空")
+        }
+     });
+     
+    </script>
+{% endblock %}
+

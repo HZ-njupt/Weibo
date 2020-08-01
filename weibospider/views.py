@@ -8,8 +8,7 @@ from django.shortcuts import render
 from . import spider
 from . import judge
 from django.http import HttpResponse
-from .models import UserInfo,Information
-from .models import Normal,Abnormal
+from .models import UserInfo,Information,Normal,Abnormal
 from django.db.models import Avg,StdDev
 from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
@@ -23,13 +22,13 @@ from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
-from .models import UserInfo,Information
+from .models import UserInfo,Information,UserInfoDays
 import json 
-from . import userinfospider
+from . import everyday
 
 # Create your views here.
 def getid(request):
-    return render(request, "test.html")
+    return render(request, "home.html")
     
 # def showlist(request):
 #     return render(request, "list.html")
@@ -98,16 +97,12 @@ def test(tuser,num):
             del a[0],a[-1]
             x=np.mean(a)
             z=np.std(a,ddof=1)
-            #print (x,y,z)
             d1 = userdata.values('publish_time')[i]['publish_time']
             i=i+1
             d2 = userdata.values('publish_time')[i]['publish_time']
             d = d1 - d2
             if abs(d.days - x)>2*z:
                 dec[i-l+number]=0
-            #else :
-                #print("error",d.days)
-                #dec[i-l+number]=0
             le=le+1
         print("发博间隔",dec)
         i=l-number
@@ -115,10 +110,6 @@ def test(tuser,num):
             tool = userdata.values('publish_tool')
             if (tool[i-1]['publish_tool'])!=(tool[i]['publish_tool']):
                     dec[i-l+number]=0
-            #else :
-                #print(Information.objects.all().values('publish_tool')[i-1]['publish_tool'])
-                #print("wrong",i) 
-                #dec[i-l+number]=0
             i=i+1
         print("工具",dec)
         i=0
@@ -158,43 +149,43 @@ def Inspider(request):
         spider.startspider(user_id)
         userinfo = UserInfo.objects.filter(userid = user_id)[0]
         num = Information.objects.filter(tuser = userinfo.id).count()
-        if num>4:
-           statusnum = test(userinfo.id,4)
-        else:
-           statusnum = test(userinfo.id,1)
-        
-        if statusnum == 0 : status = "异常"
-        elif statusnum == -1 : status = "可疑"
-        else : status = "正常"
         data_info = []
+        if num>10:
+            status = "正常"
+        #    statusnum = test(userinfo.id,4)
+        #    if statusnum == 0 : status = "异常"
+        #    elif statusnum == -1 : status = "可疑"
+        #    else : status = "正常"
+        else:
+            status = "用户数据不足无法判断"
+        
         databases = Information.objects.filter(tuser = userinfo.id)
         data_info.append({
-              "nickname": userinfo.nickname,
-              "userid": userinfo.userid,
-              "following":userinfo.following,
-              "follower":userinfo.followers,
-              "weibonum":userinfo.weibo_num,
-              "status":status,
+            "nickname": userinfo.nickname,
+            "userid": userinfo.userid,
+            "following":userinfo.following,
+            "follower":userinfo.followers,
+            "weibonum":userinfo.weibo_num,
+            "status":status,
         })
         for item in databases:
             data = {
-                "content":item.content,
-                "publish_place":item.publish_place,
-               
-                "publish_tool":item.publish_tool,
-                "approved_num":item.approved_num,
-                "comment_num":item.comment_num,
-                "transmit_num":item.transmit_num,
+            "content":item.content,
+            "publish_place":item.publish_place,
+            "publish_tool":item.publish_tool,
+            "approved_num":item.approved_num,
+            "comment_num":item.comment_num,
+            "transmit_num":item.transmit_num,
             }
             data_info.append(data)  
+        
         return HttpResponse(json.dumps(data_info),content_type="application/json")
     except Exception as e:
         print(e)
         return ("error")
     
 
-
 def userinfo(requset):
-    userinfospider.getfansinfo("6153069294")
+    everyday.infoeveryday()
 
 

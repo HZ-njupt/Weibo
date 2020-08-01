@@ -7,7 +7,7 @@ import copy
 import csv
 import os
 import requests
-from .models import UserInfo,Information
+from .models import UserInfo,Information,UserInfoDays
 from .spider import Validator,Printer,Parser,Spider
 
 

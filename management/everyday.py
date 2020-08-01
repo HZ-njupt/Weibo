@@ -13,7 +13,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 from time import sleep
-from .models import UserInfo,Information,UserInfoDays
+from weibospider.models import UserInfo,Information,UserInfoDays
 from django.conf import settings
 
 class Parser:
@@ -154,34 +154,6 @@ class Parser:
                 weibo_content = wb_content
         return weibo_content
 
-    def get_long_retweet(self, weibo_link):
-        """获取长转发微博"""
-        wb_content = self.get_long_weibo(weibo_link)
-        weibo_content = wb_content[:wb_content.rfind(u'原文转发')]
-        return weibo_content
-
-    def get_retweet(self, info, weibo_id):
-        """获取转发微博"""
-        wb_content = self.deal_garbled(info)
-        wb_content = wb_content[wb_content.find(':') +
-                                1:wb_content.rfind(u'赞')]
-        wb_content = wb_content[:wb_content.rfind(u'赞')]
-        a_text = info.xpath('div//a/text()')
-        if u'全文' in a_text:
-            weibo_link = 'https://weibo.cn/comment/' + weibo_id
-            weibo_content = self.get_long_retweet(weibo_link)
-            if weibo_content:
-                wb_content = weibo_content
-        retweet_reason = self.deal_garbled(info.xpath('div')[-1])
-        retweet_reason = retweet_reason[:retweet_reason.rindex(u'赞')]
-        original_user = info.xpath("div/span[@class='cmt']/a/text()")
-        if original_user:
-            original_user = original_user[0]
-            wb_content = (retweet_reason + '\n' + u'原始用户: ' + original_user +
-                          '\n' + u'转发内容: ' + wb_content)
-        else:
-            wb_content = retweet_reason + '\n' + u'转发内容: ' + wb_content
-        return wb_content
 
     def is_original(self, info):
         """判断微博是否为原创微博"""
@@ -191,13 +163,10 @@ class Parser:
         else:
             return True
 
-    def get_weibo_content(self, info, is_original):
+    def get_weibo_content(self, info):
         """获取微博内容"""
         weibo_id = info.xpath('@id')[0][2:]
-        if is_original:
-            weibo_content = self.get_original_weibo(info, weibo_id)
-        else:
-            weibo_content = self.get_retweet(info, weibo_id)
+        weibo_content = self.get_original_weibo(info, weibo_id)
         return weibo_content
 
     def get_publish_place(self, info):
@@ -298,8 +267,7 @@ class Parser:
             is_original = self.is_original(info)
             if (not self.config['filter']) or is_original:
                 weibo['id'] = info.xpath('@id')[0][2:]
-                weibo['content'] = self.get_weibo_content(info,
-                                                          is_original)  # 微博内容
+                weibo['content'] = self.get_weibo_content(info)  # 微博内容
                 weibo['publish_place'] = self.get_publish_place(info)  # 微博发布位置
                 weibo['publish_time'] = self.get_publish_time(info)  # 微博发布时间
                 weibo['publish_tool'] = self.get_publish_tool(info)  # 微博发布工具
@@ -315,15 +283,10 @@ class Parser:
                     weibo['retweet_pictures'] = picture_urls[
                         'retweet_pictures']  # 转发图片url
                     weibo['original'] = is_original  # 是否原创微博
-                weibo['video_url'] = self.get_video_url(info,
-                                                        is_original)  # 微博视频url
-            else:
-                weibo = None
-            #qs = UserInfo.objects.filter(userid=id)[2]
-            #print(qs)
-            qs = UserInfo.objects.filter(userid=id)[0]
-            Information.objects.create(content=weibo['content'],publish_place=weibo['publish_place'],publish_time=weibo['publish_time'],publish_tool=weibo['publish_tool'],approved_num=weibo['up_num'],comment_num=weibo['comment_num'],transmit_num=weibo['retweet_num'],tuser=qs)
-            return weibo
+                weibo['video_url'] = self.get_video_url(info,is_original)  # 微博视频url
+                qs = UserInfo.objects.filter(userid=id)[0]
+                Information.objects.create(content=weibo['content'],publish_place=weibo['publish_place'],publish_time=weibo['publish_time'],publish_tool=weibo['publish_tool'],approved_num=weibo['up_num'],comment_num=weibo['comment_num'],transmit_num=weibo['retweet_num'],tuser=qs)
+                return weibo
         except Exception as e:
             print('Error: ', e)
             traceback.print_exc()
@@ -426,7 +389,7 @@ def write_log(since_date):
 
 
 class Spider(object):
-    def __init__(self, config,userid,sincedate,exist):
+    def __init__(self,config):
         """Weibo类初始化"""
         self.config = config
         # change cookie from string to dict
@@ -435,11 +398,7 @@ class Spider(object):
                 t.strip().split("=")[0]: t.strip().split("=")[1]
                 for t in self.config['cookie'].split(";")
             }
-        self.config['user_id_list'].append(userid)
-        self.config["since_date"] = sincedate
-        self.config["weibo_num"] = 50
-        if exist:
-            self.config['exist'] = 1
+        self.config["since_date"] = 1
         if type(self.config['since_date']) == type(0):
             self.config['since_date'] = str(
                 date.today() - timedelta(self.config['since_date']))
@@ -451,9 +410,9 @@ class Spider(object):
         #self.downloader = Downloader(self.config)
         self.parser = Parser(self.config)
 
-    def get_nickname(self):
+    def get_nickname(self,userid):
         """获取用户昵称"""
-        url = 'https://weibo.cn/%s/info' % (self.user['id'])
+        url = 'https://weibo.cn/%s/info' % (userid)
         selector = self.parser.deal_html(url, self.config['cookie'])
         nickname = selector.xpath('//title/text()')[0]
         nickname = nickname[:-3]
@@ -463,10 +422,11 @@ class Spider(object):
         
         self.user['nickname'] = nickname
         #UserInfo.nickname = nickname
+        return nickname
 
     def get_user_info(self, selector):
         """获取用户昵称、微博数、关注数、粉丝数"""
-        self.get_nickname()  # 获取用户昵称
+        self.get_nickname(self.user['id'])  # 获取用户昵称
         user_info = selector.xpath("//div[@class='tip2']/*/text()")
 
         self.user['weibo_num'] = int(user_info[0][3:-1])
@@ -475,7 +435,9 @@ class Spider(object):
         # UserInfo.weibo_num = int(user_info[0][3:-1])
         # UserInfo.following = int(user_info[1][3:-1])
         # UserInfo.followers = int(user_info[2][3:-1])
-        UserInfo.objects.create(nickname=self.user['nickname'],userid=self.user['id'],weibo_num=self.user['weibo_num'],following=self.user['following'],followers=self.user['followers'])
+        dayuser = UserInfo.objects.filter(userid = self.user['id'])
+        dayuser.update(nickname=self.user['nickname'],userid=self.user['id'],weibo_num=self.user['weibo_num'],following=self.user['following'],followers=self.user['followers'],days = (dayuser[0].days+1))
+        UserInfoDays.objects.create(userid=self.user['id'],nickname=self.user['nickname'],following=self.user['following'], time = date.today() ,iuser = dayuser[0])
         self.printer.print_user_info(self.user)
         #self.writer.write_user(self.user)
         print('*' * 100)
@@ -494,36 +456,26 @@ class Spider(object):
                 if weibo:
                     if weibo['id'] in self.weibo_id_list:
                         continue
-                    if self.config['exist']:
-                         publish_time = datetime.strptime(weibo['publish_time'][:10], "%Y-%m-%d")
-                         since_date = datetime.strptime(self.config['since_date'], "%Y-%m-%d")
-                         if publish_time < since_date:
-                             if self.parser.is_pinned_weibo(info[i]):
-                                continue
-                         else:
-                            return True
+                    publish_time = datetime.strptime(weibo['publish_time'][:10], "%Y-%m-%d")
+                    since_date = datetime.strptime(self.config['since_date'], "%Y-%m-%d")
+                    if publish_time < since_date:
+                        if self.parser.is_pinned_weibo(info[i]):
+                            continue
                     else:
-                        if self.got_num >= self.config['weibo_num']:
-                            if self.parser.is_pinned_weibo(info[i]):
-                                continue
-                            else:
-                                return True
+                        return True
                     self.printer.print_one_weibo(weibo)
-
                     self.weibo.append(weibo)
                     self.weibo_id_list.append(weibo['id'])
                     self.got_num += 1
                     print('-' * 100)
 
+                    #self.writer.write_weibo([weibo])
 
     def get_weibo_info(self):
         """获取微博信息"""
         url = 'https://weibo.cn/u/%s' % (self.user['id'])
         selector = self.parser.deal_html(url, self.config['cookie'])
-        if UserInfo.objects.filter(userid = self.user['id']).exists():
-            print("用户存在")
-        else:
-            self.get_user_info(selector)  # 获取用户昵称、微博数、关注数、粉丝数
+        self.get_user_info(selector)  # 获取用户昵称、微博数、关注数、粉丝数
 
         page_num = self.parser.get_page_num(selector)  # 获取微博总页数
         page1 = 0
@@ -553,27 +505,73 @@ class Spider(object):
         self.user = {'id': userid}  # 存储爬取到的用户信息
         self.weibo_id_list = []  # 存储爬取到的所有微博id
 
+
+    def saveuserinfo(self,userid):
+        if UserInfo.objects.filter(userid=userid).exists():
+            return 0
+        url = 'https://weibo.cn/u/%s' % (userid)
+        selector = self.parser.deal_html(url, self.config['cookie'])
+        nickname = self.get_nickname(userid)  # 获取用户昵称
+        user_info = selector.xpath("//div[@class='tip2']/*/text()")
+        weibo_num = int(user_info[0][3:-1])
+        following = int(user_info[1][3:-1])
+        followers = int(user_info[2][3:-1])
+        UserInfo.objects.create(nickname=nickname,userid=userid,weibo_num=weibo_num,following=following,followers=followers)
+
+
+    def crawlDetailPage(self,userid,page):
+        url = 'https://weibo.cn/%s/fans?page=%d' % (userid, page)
+        selector = self.parser.deal_html(url, self.config['cookie'])
+        fans = selector.xpath("//td/a//@href")
+        userlist = []
+        for item in fans:
+            if re.match( r'https://weibo.cn/u/',item):
+                pattern = re.compile(r'\d+')   
+                result1 = pattern.findall(item)
+                if result1[0] in userlist:
+                    continue
+                else:
+                    self.saveuserinfo(result1[0])
+                    userlist.append(result1[0])
+        UserInfo.objects.filter(userid = userid).update( get_fans=True )
+
+    
+    def get_fans(self,userid):
+        idlist = []
+        url = 'https://weibo.cn/%s/fans' % (userid)
+        selector = self.parser.deal_html(url, self.config['cookie'])
+        page_num = self.parser.get_page_num(selector)
+        if page_num>3:
+            num = []
+            for i in range(3):
+                tnum = random.randint(1, page_num)
+                if tnum in num:
+                    i-=1
+                    continue
+                idlist.append(self.crawlDetailPage(userid,tnum))
+                num.append (tnum)
+        else:
+            for i in range(page_num):
+                idlist.append(self.crawlDetailPage(userid,i))
+        print(idlist)
+
+
     def start(self):
         """运行爬虫"""
-        for userid in self.config['user_id_list']:
-            self.initialize_info(userid)
-            print('*' * 100)
-            self.get_weibo_info()
-            print(u'信息抓取完毕')
-            print('*' * 100)
-            
+        IdList = UserInfo.objects.all()
+        for item in IdList:
+            if item.days < 10:
+                self.initialize_info(item.userid)
+                self.get_weibo_info()
+                print(u'信息抓取完毕')
+                print('*' * 100)
+                if item.get_fans == False:
+                    self.get_fans(item.userid)
+            else:
+                item.delete()
+                UserInfoDays.objects.filter(iuser = item.id).delete()
 
-
-def startspider(userid):
-    sinceday = 1
-    exist = 0
-    if UserInfo.objects.filter(userid=userid).exists():
-        tdata = Information.objects.filter(tuser_id = UserInfo.objects.filter(userid=userid)[0].id)
-        Idate = date.today() - tdata[0].publish_time
-        if Idate.days == 0:
-            return 0
-        sinceday = Idate.days-1
-        exist = 1
+def infoeveryday():
     import json
     config_path = os.path.split(
         os.path.realpath(__file__))[0] + os.sep + 'config.json'
@@ -582,8 +580,8 @@ def startspider(userid):
             (os.path.split(os.path.realpath(__file__))[0] + os.sep))
     with open(config_path) as f:
         config = json.loads(f.read())
-    spider = Spider(config,userid,sinceday,exist)
-    spider.start()  # 爬取微博信息
+    spider = Spider(config)
+    spider.start()
 
 
 

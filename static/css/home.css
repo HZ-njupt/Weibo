@@ -1,0 +1,102 @@
+body{
+    overflow-x: hidden;
+    margin: 0;
+    background-color: #efefef;
+}
+.contain{
+    width: 100vw;
+    height: 100vh;
+    background-color:rgb(48, 47, 82);
+    display: flex;
+    flex-direction: row;
+    overflow-x: hidden;
+    justify-content: center;
+    align-items: center;
+    transition: linear 1s;
+}
+
+#btn-search{
+    height: 7vh;
+    width: 8vw;
+    background-color: #c93f3f;
+    font-size: 25px;
+    font-weight: 600;
+    border-radius: 20px;
+    color: white;
+    outline: none;
+    border: none;
+}
+#btn-search:hover{
+    background-color: #e85c5c;
+}
+#id-input{
+    display: inline-block;
+  border-radius: 50px;
+  width: 47vw;
+  height: 7vh;
+  background-color: rgb(39, 37, 68);
+  outline: none;
+  color: white;
+  font-size: 22px;
+  text-align: center;
+  margin-right: 20px;
+  border: solid 1px;
+  border-color: #252548;
+}
+#id-input:hover{
+    border-color:#8888c1;
+}
+#tabletest{
+    border:none;
+    width:70vw;
+    margin:0 auto;
+    color: black;
+}
+.contain2{
+    /* background-color: rgb(63, 61, 101); */
+    color: white;
+    display: none;
+}
+.table th {
+    padding: 0.4rem;
+    text-align: center;
+    background-color: rgb(0, 0, 0);
+    color: white;
+}
+
+.column{
+    display: flex;
+    width: 90vw;
+    margin: 3vh auto;
+    flex-direction: row;
+}
+.usercard{
+    height: 80vh;
+    width: 18vw;
+    display: flex;
+    background-color: rgb(48, 47, 82);
+    flex-direction: column;
+    align-items: center;
+}
+img {
+    vertical-align: middle;
+    border-style: none;
+    height: 14vh;
+    width: 14vh;
+    margin: 2vh 1vw;
+    border-radius: 50px;
+ }
+ .rowsty{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+ }
+ table tr:nth-child(odd)
+{
+    background: rgb(250, 251, 252);
+}
+table tr:nth-child(even)
+{
+    background: #c0c0c0;
+}
